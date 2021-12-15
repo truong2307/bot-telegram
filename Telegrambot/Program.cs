@@ -29,7 +29,6 @@ namespace Telegrambot
                            receiverOptions,
                            cts.Token);
 
-
             var me = await botClient.GetMeAsync();
 
             Console.WriteLine($"Start listening for @{me.Username}");
@@ -38,9 +37,5 @@ namespace Telegrambot
             // Send cancellation request to stop bot
             cts.Cancel();
         }
-
-        
-
-       
     }
 }
