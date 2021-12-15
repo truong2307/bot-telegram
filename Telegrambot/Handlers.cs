@@ -1,17 +1,12 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Telegram.Bot.Exceptions;
-using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types;
 using Telegram.Bot;
-using static System.Collections.Specialized.BitVector32;
-using Microsoft.VisualBasic;
+using Telegram.Bot.Exceptions;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace Telegrambot
 {
@@ -21,23 +16,42 @@ namespace Telegrambot
            , Update update
            , CancellationToken cancellationToken)
         {
-            //if (update.Type != UpdateType.Message)
-            //    return;
-            //// Only process text messages
-            //if (update.Message!.Type != MessageType.Text)
-            //    return;
-
-            //command bit
-            if (update.Message.Text == "!bit")
+            //command list
+            switch (update.Message.Text)
             {
-                await PriceBtc(botClient, update, cancellationToken);
+                case "!bit":
+                    await PriceBtc(botClient, update, cancellationToken);
+                    break;
+                default:
+                    break;
             }
         }
 
-        private static async Task PriceBtc(ITelegramBotClient botClient
-            , Update update
+        public static Task HandleErrorAsync(ITelegramBotClient botClient
+            , Exception exception
             , CancellationToken cancellationToken)
         {
+            var ErrorMessage = exception switch
+            {
+                ApiRequestException apiRequestException
+                    => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+                _ => exception.ToString()
+            };
+
+            Console.WriteLine(ErrorMessage);
+            return Task.CompletedTask;
+        }
+        private static async Task PriceBtc(ITelegramBotClient botClient
+           , Update update
+           , CancellationToken cancellationToken)
+        {
+
+            if (update.Type != UpdateType.Message)
+                return;
+            // Only process text messages
+            if (update.Message!.Type != MessageType.Text)
+                return;
+
             var client = new HttpClient();
             var result = await client.GetStringAsync("https://api.blockchain.com/v3/exchange/l2/BTC-USD");
 
@@ -56,21 +70,6 @@ namespace Telegrambot
                 text: "BTC to USD " + "\n" + "1 BTC = " + post["px"] + " $".ToString(),
                 replyToMessageId: update.Message.MessageId,
                 cancellationToken: cancellationToken);
-        }
-
-        public static Task HandleErrorAsync(ITelegramBotClient botClient
-            , Exception exception
-            , CancellationToken cancellationToken)
-        {
-            var ErrorMessage = exception switch
-            {
-                ApiRequestException apiRequestException
-                    => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-                _ => exception.ToString()
-            };
-
-            Console.WriteLine(ErrorMessage);
-            return Task.CompletedTask;
         }
     }
 }
